@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: kanban
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-kanban_secret_2024}
+      POSTGRES_DB: kanban_sync
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kanban"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DATABASE_URL: "postgresql://kanban:${DB_PASSWORD:-kanban_secret_2024}@db:5432/kanban_sync"
+      PORT: "5000"
+      APP_URL: "http://16.192.149.23.nip.io"
+      ADMIN_EMAIL: "akshaytech01@gmail.com"
+    ports:
+      - "80:5000"
+
+volumes:
+  pgdata:
